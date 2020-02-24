@@ -1,5 +1,5 @@
-import urllib, urllib2, os, io, xbmc, xbmcaddon, xbmcgui, json, re, chardet, shutil, time, hashlib, gzip, xbmcvfs, requests
-from StringIO import StringIO
+import urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse, os, io, xbmc, xbmcaddon, xbmcgui, json, re, chardet, shutil, time, hashlib, gzip, xbmcvfs, requests
+from io import BytesIO
 import requests, shutil
 from xbmc import getLocalizedString
 
@@ -7,27 +7,27 @@ AddonID = 'plugin.video.playlistLoader'
 Addon = xbmcaddon.Addon(AddonID)
 icon = Addon.getAddonInfo('icon')
 AddonName = Addon.getAddonInfo("name")
-addon_data_dir = xbmc.translatePath(Addon.getAddonInfo("profile")).decode("utf-8")
+addon_data_dir = xbmc.translatePath(Addon.getAddonInfo("profile"))
 cacheDir = os.path.join(addon_data_dir, "cache")
 tvdb_path = os.path.join(cacheDir, "TVDB")
 tmdb_path = os.path.join(cacheDir, "TMDB")
 UA = 'Mozilla/5.0 (Windows NT 6.1; rv:11.0) Gecko/20100101 Firefox/11.0'
 
-class SmartRedirectHandler(urllib2.HTTPRedirectHandler):
+class SmartRedirectHandler(urllib.request.HTTPRedirectHandler):
 	def http_error_301(self, req, fp, code, msg, headers):
-		result = urllib2.HTTPRedirectHandler.http_error_301(self, req, fp, code, msg, headers)
+		result = urllib.request.HTTPRedirectHandler.http_error_301(self, req, fp, code, msg, headers)
 		return result
 
 	def http_error_302(self, req, fp, code, msg, headers):
-		result = urllib2.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
+		result = urllib.request.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
 		return result
 
 def getFinalUrl(url):
 	link = url
 	try:
-		req = urllib2.Request(url)
+		req = urllib.request.Request(url)
 		req.add_header('User-Agent', UA)
-		opener = urllib2.build_opener(SmartRedirectHandler())
+		opener = urllib.request.build_opener(SmartRedirectHandler())
 		f = opener.open(req)
 		link = f.url
 		if link is None or link == '':
@@ -37,34 +37,31 @@ def getFinalUrl(url):
 	return link
 		
 def OpenURL(url, headers={}, user_data={}, cookieJar=None, justCookie=False):
-	if isinstance(url, unicode):
-		url = url.encode('utf8')
-	#url = urllib.quote(url, ':/')
-	cookie_handler = urllib2.HTTPCookieProcessor(cookieJar)
-	opener = urllib2.build_opener(cookie_handler, urllib2.HTTPBasicAuthHandler(), urllib2.HTTPHandler())
+	cookie_handler = urllib.request.HTTPCookieProcessor(cookieJar)
+	opener = urllib.request.build_opener(cookie_handler, urllib.request.HTTPBasicAuthHandler(), urllib.request.HTTPHandler())
 	if user_data:
-		user_data = urllib.urlencode(user_data)
-		req = urllib2.Request(url, user_data)
+		user_data = urllib.parse.urlencode(user_data)
+		req = urllib.request.Request(url, user_data)
 	else:
-		req = urllib2.Request(url)
+		req = urllib.request.Request(url)
 	req.add_header('Accept-encoding', 'gzip')
-	for k, v in headers.items():
+	for k, v in list(headers.items()):
 		req.add_header(k, v)
-	if not req.headers.has_key('User-Agent') or req.headers['User-Agent'] == '':
+	if 'User-Agent' not in req.headers or req.headers['User-Agent'] == '':
 		req.add_header('User-Agent', UA)
 	response = opener.open(req)
 	if justCookie == True:
-		if response.info().has_key("Set-Cookie"):
+		if "Set-Cookie" in response.info():
 			data = response.info()['Set-Cookie']
 		else:
 			data = None
 	else:
 		if response.info().get('Content-Encoding') == 'gzip':
-			buf = StringIO(response.read())
+			buf = BytesIO(response.read())
 			f = gzip.GzipFile(fileobj=buf)
-			data = f.read().replace("\r", "")
+			data = f.read().decode('UTF-8').replace("\r", "")
 		else:
-			data = response.read().replace("\r", "")
+			data = response.read().decode('UTF-8').replace("\r", "")
 	response.close()
 	return data
 
@@ -103,7 +100,7 @@ def ReadList(fileName):
 def SaveList(filname, chList):
 	try:
 		with io.open(filname, 'w', encoding='utf-8') as handle:
-			handle.write(unicode(json.dumps(chList, indent=4, ensure_ascii=False)))
+			handle.write(str(json.dumps(chList, indent=4, ensure_ascii=False)))
 		success = True
 	except Exception as ex:
 		xbmc.log(str(ex), 3)
@@ -121,7 +118,7 @@ def isFileNew(file, deltaInSec):
 	
 def GetList(address, cache=0):
 	if address.startswith('http'):
-		fileLocation = os.path.join(cacheDir, hashlib.md5(address.encode('utf8')).hexdigest())
+		fileLocation = os.path.join(cacheDir, hashlib.md5(address.encode('UTF-8')).hexdigest())
 		fromCache = isFileNew(fileLocation, cache*60)
 		if fromCache:
 			response = ReadFile(fileLocation)
@@ -158,7 +155,7 @@ def m3u2list(url, cache):
 		li.append(item_data)
 	chList = []
 	for channel in li:
-		item_data = {"display_name": (channel["display_name"].decode("utf-8", "ignore")), "url": channel["url"]}
+		item_data = {"display_name": channel["display_name"], "url": channel["url"]}
 		matches=re.compile(' (.*?)="(.*?)"').findall(channel["params"])
 		for field, value in matches:
 			item_data[field.strip().lower().replace('-', '_')] = value.strip()
@@ -262,7 +259,7 @@ def startTheTvDbScan(index, playlistsFile, token):
 			progress.update(int(percent), Addon.getLocalizedString(32029) + movie_item["group_title"], "", "")
 			
 			params = {"name" : movie_item["group_title"]}
-			params = urllib.urlencode(params)
+			params = urllib.parse.urlencode(params)
 			res = requests.get(search_series % params, headers=headers)
 			
 			if not res.status_code == 200:
