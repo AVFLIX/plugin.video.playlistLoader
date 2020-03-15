@@ -168,10 +168,7 @@ def GetEncodeString(str):
 	try:
 		str = str.decode(chardet.detect(str)["encoding"]).encode("utf-8")
 	except:
-		try:
-			str = str.encode("utf-8")
-		except:
-			pass
+		pass
 	return str
 
 def DelFile(filname):
