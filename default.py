@@ -306,7 +306,7 @@ def PlayUrl(name, url, iconimage=None):
 def AddDir(name, url, mode, iconimage='', logos='', index=-1, move=0, uuid='0', isFolder=True, IsPlayable=False, background=None, cacheMin='0', plot="", fanart="", addToVdir=True):
     urlParams = {'name': name, 'url': url, 'mode': mode, 'iconimage': iconimage, 'logos': logos, 'cache': cacheMin, 'uuid': uuid}
     
-    liz = xbmcgui.ListItem(name, iconImage=iconimage, thumbnailImage=iconimage)
+    liz = xbmcgui.ListItem(name)
     liz.setInfo(type="Video", infoLabels={ "Title": name, "plot": plot, "plotoutline": plot, "tagline": plot})
     fanart = fanart if not background else background
     liz.setArt({'fanart': fanart, 'thumb': iconimage, 'poster': iconimage})
