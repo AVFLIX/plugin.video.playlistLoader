@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.playlistLoader" name="Playlist Loader PY3" version="3.0.1" provider-name="Jakkerson">
+<addon id="plugin.video.playlistLoader" name="Playlist Loader PY3" version="3.0.2" provider-name="Jakkerson">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
     <import addon="script.module.requests" version="2.22.0"/>
@@ -33,5 +33,8 @@
 - Regex fix for title containing comas.
 - Added TheTvDb scan for each lists in contextual menu ( beta ).
 	</news>
+    <assets>
+      <icon>icon.png</icon>
+    </assets>
   </extension>
 </addon>

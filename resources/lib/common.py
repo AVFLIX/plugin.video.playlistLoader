@@ -59,9 +59,9 @@ def OpenURL(url, headers={}, user_data={}, cookieJar=None, justCookie=False):
 		if response.info().get('Content-Encoding') == 'gzip':
 			buf = BytesIO(response.read())
 			f = gzip.GzipFile(fileobj=buf)
-			data = f.read().decode('UTF-8').replace("\r", "")
+			data = f.read().replace("\r", "")
 		else:
-			data = response.read().decode('UTF-8').replace("\r", "")
+			data = response.read().replace("\r", "")
 	response.close()
 	return data
 
@@ -127,7 +127,7 @@ def GetList(address, cache=0):
 			if cache > 0:
 				SaveFile(fileLocation, response)
 	else:
-		response = ReadFile(address.decode('utf-8'))
+		response = ReadFile(address)
 	return response
 		
 def plx2list(url, cache):
